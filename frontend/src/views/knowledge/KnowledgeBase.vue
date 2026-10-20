@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, reactive, computed, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, watch, reactive, computed, nextTick, inject, type Component } from "vue";
 import { MessagePlugin } from "tdesign-vue-next";
 import DocContent from "@/components/doc-content.vue";
 import useKnowledgeBase from '@/hooks/useKnowledgeBase';
@@ -15,6 +15,7 @@ import { permissionCanEditKB, permissionCanManageKB } from '@/utils/kbPermission
 import { useChatResourcesStore } from '@/stores/chatResources';
 import { useEditorResourcesStore } from '@/stores/editorResources';
 import KnowledgeBaseEditorModal from './KnowledgeBaseEditorModal.vue';
+const knowledgeSearch = inject<Component | null>('knowledge-search', null);
 const uiStore = useUIStore();
 const orgStore = useOrganizationStore();
 const authStore = useAuthStore();
@@ -2308,6 +2309,7 @@ const handleKBEditorSuccess = (kbIdValue: string) => {
             </h2>
             <!-- 标题行右侧的动作锚点：聚拢"信息"和"设置"两个圆形按钮。 -->
             <div class="kb-title-actions">
+              <component :is="knowledgeSearch" v-if="knowledgeSearch" />
               <KBInfoPopover v-if="kbInfo && !authStore.isLiteMode" :kb-info="kbInfo"
                 :supported-file-types="[...supportedFileTypes]" />
               <t-tooltip v-if="canManage" :content="$t('knowledgeBase.settings')" placement="top">
