@@ -4779,7 +4779,7 @@ export default {
       typeLabel: '지식베이스 유형',
       typeDocument: '문서',
       typeFAQ: 'Q&A',
-      typeDescription: 'FAQ 유형은 구조화된 Q&A 데이터에 적합합니다. 문서 유형은 파일 파싱과 청킹을 지원합니다. Wiki 유형은 LLM을 통해 상호 연결된 지식 페이지를 자동으로 구축합니다.',
+      typeDescription: '문서 유형에서 파일을 가져오고 아래 Wiki를 활성화하면 서로 연결된 페이지를 생성할 수 있습니다. FAQ 유형에서는 질문과 답변을 관리합니다.',
       nameLabel: '지식베이스 이름',
       namePlaceholder: '지식베이스 이름을 입력해주세요',
       descriptionLabel: '지식베이스 설명',

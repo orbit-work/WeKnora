@@ -3358,7 +3358,7 @@ export default {
       typeLabel: 'ナレッジベースの種類',
       typeDocument: 'ドキュメント型',
       typeFAQ: 'FAQ型',
-      typeDescription: 'FAQ型は構造化されたQ&Aデータに適しています。ドキュメント型はファイルの解析とチャンク分割に対応します。Wiki型はLLMで相互リンクされたナレッジページを自動構築します。',
+      typeDescription: 'ドキュメント型でファイルを取り込み、下のWikiを有効にすると相互リンクされたページを生成できます。FAQ型では質問と回答を管理します。',
       nameLabel: 'ナレッジベース名',
       namePlaceholder: 'ナレッジベース名を入力してください',
       descriptionLabel: 'ナレッジベースの説明',

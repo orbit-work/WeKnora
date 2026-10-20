@@ -39,6 +39,7 @@
               <span class="breadcrumb-current">{{ $t('knowledgeEditor.faq.title') }}</span>
             </h2>
             <div class="kb-title-actions">
+              <component :is="knowledgeSearch" v-if="knowledgeSearch" />
               <KBInfoPopover
                 v-if="kbInfo && !authStore.isLiteMode"
                 :kb-info="kbInfo"
@@ -756,7 +757,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, computed, onUnmounted, h } from 'vue'
+import { ref, reactive, watch, onMounted, computed, onUnmounted, h, inject, type Component } from 'vue'
 import KnowledgeTagFilter from './KnowledgeTagFilter.vue'
 import { MessagePlugin, Icon as TIcon } from 'tdesign-vue-next'
 import { useConfirmDelete } from '@/components/settings/useConfirmDelete'
@@ -789,6 +790,8 @@ import KBSwitcherDropdown from '@/components/KBSwitcherDropdown.vue'
 import FAQBatchBar from './FAQBatchBar.vue'
 import KbTagManageDrawer from './KbTagManageDrawer.vue'
 import { useUIStore } from '@/stores/ui'
+
+const knowledgeSearch = inject<Component | null>('knowledge-search', null)
 
 interface FAQEntry {
   id: number

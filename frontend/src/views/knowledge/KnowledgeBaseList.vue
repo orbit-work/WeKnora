@@ -9,6 +9,7 @@
               {{ $t('knowledgeBase.title') }}
             </h2>
             <div class="header-actions" style="--wails-draggable: no-drag">
+              <component :is="knowledgeSearch" v-if="knowledgeSearch" />
               <ResourceSortControl v-model="selectedResourceSort" />
               <t-tooltip v-if="authStore.canManageKnowledgeBases" :content="$t('knowledgeList.create')" placement="bottom">
                  <t-button variant="text" theme="default" size="small" class="header-action-btn"
@@ -720,7 +721,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed, watch, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch, nextTick, inject, type Component } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MessagePlugin, Icon as TIcon } from 'tdesign-vue-next'
 import EmptyState from '@/components/EmptyState.vue'
@@ -756,6 +757,7 @@ import {
   type ResourceSortValue,
 } from '@/utils/resourceSorting'
 
+const knowledgeSearch = inject<Component | null>('knowledge-search', null)
 const router = useRouter()
 const route = useRoute()
 const uiStore = useUIStore()

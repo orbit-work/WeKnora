@@ -26,6 +26,24 @@
               </div>
             </div>
 
+            <div class="form-item" data-guide="kb-create-name">
+              <label class="form-label required">{{ $t('knowledgeEditor.basic.nameLabel') }}</label>
+              <t-input
+                v-model="formData.name"
+                :placeholder="$t('knowledgeEditor.basic.namePlaceholder')"
+                :maxlength="50"
+              />
+            </div>
+            <div class="form-item">
+              <label class="form-label">{{ $t('knowledgeEditor.basic.descriptionLabel') }}</label>
+              <t-textarea
+                v-model="formData.description"
+                :placeholder="$t('knowledgeEditor.basic.descriptionPlaceholder')"
+                :maxlength="200"
+                :autosize="{ minRows: 3, maxRows: 6 }"
+              />
+            </div>
+
             <div class="form-item">
               <label class="form-label required">{{ $t('knowledgeEditor.basic.typeLabel') }}</label>
               <t-radio-group
@@ -122,24 +140,6 @@
                 :placeholder="$t('knowledgeEditor.wiki.extractionInstructionsPlaceholder')"
                 :maxlength="4000"
                 :autosize="{ minRows: 3, maxRows: 8 }"
-              />
-            </div>
-
-            <div class="form-item" data-guide="kb-create-name">
-              <label class="form-label required">{{ $t('knowledgeEditor.basic.nameLabel') }}</label>
-              <t-input
-                v-model="formData.name"
-                :placeholder="$t('knowledgeEditor.basic.namePlaceholder')"
-                :maxlength="50"
-              />
-            </div>
-            <div class="form-item">
-              <label class="form-label">{{ $t('knowledgeEditor.basic.descriptionLabel') }}</label>
-              <t-textarea
-                v-model="formData.description"
-                :placeholder="$t('knowledgeEditor.basic.descriptionPlaceholder')"
-                :maxlength="200"
-                :autosize="{ minRows: 3, maxRows: 6 }"
               />
             </div>
 
@@ -484,6 +484,7 @@
               <div class="setting-control">
                 <t-switch
                   v-model="formData.asrConfig.enabled"
+                  @change="handleASRToggle"
                   size="medium"
                 />
               </div>
@@ -546,12 +547,14 @@
 
       <!-- 共享设置（仅编辑模式） -->
       <div v-if="editorMode === 'edit' && activeKbId && currentSection === 'share'" class="section">
-        <KBShareSettings :kb-id="activeKbId" :can-share="canShareKB" />
+        <component v-if="permissionSettings" :is="permissionSettings" :kb-id="activeKbId" />
+        <KBShareSettings v-else :kb-id="activeKbId" :can-share="canShareKB" />
       </div>
 
       <!-- 活动记录（仅编辑模式，KB 所属租户内 Owner/Admin） -->
       <div v-if="editorMode === 'edit' && activeKbId && canViewActivity && currentSection === 'activity'" class="section">
-        <KnowledgeBaseActivitySettings :kb-id="activeKbId" :active="currentSection === 'activity'" />
+        <component v-if="activitySettings" :is="activitySettings" :kb-id="activeKbId" />
+        <KnowledgeBaseActivitySettings v-else :kb-id="activeKbId" :active="currentSection === 'activity'" />
       </div>
     </div>
 
@@ -563,7 +566,7 @@
           {{ $t('knowledgeEditor.postCreateHint.footer') }}
         </span>
       </p>
-      <p v-if="isInstantSection" class="settings-footer-note">
+      <p v-if="isInstantSection && !(permissionSettings && currentSection === 'share')" class="settings-footer-note">
         <t-icon name="info-circle-filled" class="settings-footer-note__icon" />
         <span>{{ $t('knowledgeEditor.footer.instantEffect') }}</span>
       </p>
@@ -589,7 +592,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, inject, type Component } from 'vue'
 import KbCreateContextualGuide from '@/components/KbCreateContextualGuide.vue'
 import { KB_EDITOR_FOCUS_SECTION_EVENT, markContextualGuideDone } from '@/config/contextualGuides'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
@@ -645,6 +648,9 @@ import DataSourceSettings from './settings/DataSourceSettings.vue'
 import KnowledgeBaseActivitySettings from './settings/KnowledgeBaseActivitySettings.vue'
 import { useI18n } from 'vue-i18n'
 
+const permissionSettings = inject<Component | null>('knowledge-permission-settings', null)
+const activitySettings = inject<Component | null>('knowledge-activity-settings', null)
+const canManageKnowledge = inject<((id: string) => boolean) | null>('knowledge-can-manage', null)
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 const chatResources = useChatResourcesStore()
@@ -763,6 +769,7 @@ const isKbOwner = computed(() => {
 
 const canViewActivity = computed(() => {
   if (editorMode.value !== 'edit' || !activeKbId.value) return false
+  if (canManageKnowledge) return canManageKnowledge(activeKbId.value)
   if (Number(kbTenantId.value || 0) !== Number(authStore.currentTenantId || 0)) return false
   return isKbOwner.value || authStore.hasRole('admin')
 })
@@ -808,17 +815,15 @@ const navItems = computed(() => {
       { key: 'parser', icon: 'file-search', label: t('settings.parserEngine') },
       { key: 'multimodal', icon: 'image', label: t('knowledgeEditor.sidebar.multimodal') },
       { key: 'asr', icon: 'sound', label: t('knowledgeEditor.sidebar.asr') },
-      { key: 'storage', icon: 'cloud', label: t('knowledgeEditor.sidebar.storage') },
       { key: 'chunking', icon: 'file-copy', label: t('knowledgeEditor.sidebar.chunking') },
-      { key: 'graph', icon: 'chart-bubble', label: t('knowledgeEditor.sidebar.graph') },
       { key: 'advanced', icon: 'setting', label: t('knowledgeEditor.sidebar.advanced') }
     )
     if (editorMode.value === 'edit' && activeKbId.value && authStore.canManageDataSources) {
       items.push({ key: 'datasource', icon: 'cloud-download', label: t('knowledgeEditor.sidebar.datasource'), badge: dsCount.value || undefined })
     }
   }
-  if (editorMode.value === 'edit' && activeKbId.value && !authStore.isLiteMode) {
-    items.push({ key: 'share', icon: 'share', label: t('knowledgeEditor.sidebar.share') })
+  if (editorMode.value === 'edit' && activeKbId.value && (permissionSettings || !authStore.isLiteMode)) {
+    items.push({ key: 'share', icon: permissionSettings ? 'lock-on' : 'share', label: permissionSettings ? '权限设置' : t('knowledgeEditor.sidebar.share') })
   }
   if (canViewActivity.value) {
     items.push({ key: 'activity', icon: 'history', label: t('knowledgeEditor.sidebar.activity') })
@@ -834,28 +839,14 @@ const navGroups = computed(() => {
   return [
     {
       key: 'basic',
-      label: t('knowledgeEditor.navGroups.basic'),
-      items: pickItems(['basic', 'models', 'vectorStore', 'faq']),
+      label: '',
+      items: pickItems(['basic', 'share', 'datasource']),
     },
     {
-      key: 'processing',
-      label: t('knowledgeEditor.navGroups.processing'),
-      items: pickItems(['parser', 'chunking', 'multimodal', 'asr', 'graph', 'advanced']),
-    },
-    {
-      key: 'data',
-      label: t('knowledgeEditor.navGroups.data'),
-      items: pickItems(['storage', 'datasource']),
-    },
-    {
-      key: 'integration',
-      label: t('knowledgeEditor.navGroups.integration'),
-      items: pickItems(['share']),
-    },
-    {
-      key: 'management',
-      label: t('knowledgeEditor.navGroups.management'),
-      items: pickItems(['activity']),
+      key: 'advanced',
+      label: '高级选项',
+      collapsible: true,
+      items: pickItems(['models', 'vectorStore', 'faq', 'parser', 'chunking', 'multimodal', 'asr', 'advanced', 'activity']),
     },
   ].filter((group) => group.items.length > 0)
 })
@@ -1082,7 +1073,7 @@ const loadKBData = async (
         questionIndexMode: kb.faq_config?.question_index_mode || 'separate'
       },
       modelConfig: {
-        llmModelId: kb.summary_model_id || '',
+        llmModelId: kb.summary_model_id || selectInitialModelId(allModels.value, 'KnowledgeQA') || '',
         embeddingModelId: kb.embedding_model_id || '',
         wikiSynthesisModelId: kb.wiki_config?.synthesis_model_id || ''
       },
@@ -1107,7 +1098,8 @@ const loadKBData = async (
       storageProvider: (kb.storage_provider_config?.provider || kb.storage_config?.provider || 'local') as string,
       multimodalConfig: {
         enabled: !!kb.vlm_config?.enabled,
-        vllmModelId: kb.vlm_config?.model_id || '',
+        vllmModelId: kb.vlm_config?.model_id
+          || (kb.vlm_config?.enabled ? selectInitialModelId(allModels.value, 'VLLM') : '') || '',
         descriptionLanguage: kb.vlm_config?.description_language || '',
         customInstructions: kb.vlm_config?.custom_instructions || ''
       },
@@ -1122,7 +1114,8 @@ const loadKBData = async (
         (kb as Record<string, any>).image_processing_config || null,
       asrConfig: {
         enabled: !!kb.asr_config?.enabled,
-        modelId: kb.asr_config?.model_id || '',
+        modelId: kb.asr_config?.model_id
+          || (kb.asr_config?.enabled ? selectInitialModelId(allModels.value, 'ASR') : '') || '',
         language: kb.asr_config?.language || ''
       },
       nodeExtractConfig: {
@@ -1294,8 +1287,17 @@ const handleParserEngineRulesUpdate = (rules: any[]) => {
 }
 
 const handleMultimodalToggle = () => {
-  if (formData.value && !formData.value.multimodalConfig.enabled) {
+  if (!formData.value) return
+  if (formData.value.multimodalConfig.enabled) {
+    formData.value.multimodalConfig.vllmModelId ||= selectInitialModelId(allModels.value, 'VLLM') || ''
+  } else {
     formData.value.multimodalConfig.vllmModelId = ''
+  }
+}
+
+const handleASRToggle = () => {
+  if (formData.value?.asrConfig.enabled) {
+    formData.value.asrConfig.modelId ||= selectInitialModelId(allModels.value, 'ASR') || ''
   }
 }
 

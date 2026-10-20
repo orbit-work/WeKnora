@@ -3358,7 +3358,7 @@ export default {
       typeLabel: 'Knowledge Base Type',
       typeDocument: 'Document-based',
       typeFAQ: 'FAQ Q&A',
-      typeDescription: 'FAQ suits structured Q&A datasets; document type supports file parsing and chunking; Wiki type auto-builds interlinked knowledge pages via LLM.',
+      typeDescription: 'Use Document to import files and enable Wiki below to generate linked pages. Use FAQ to maintain questions and answers.',
       nameLabel: 'Knowledge Base Name',
       namePlaceholder: 'Enter knowledge base name',
       descriptionLabel: 'Knowledge Base Description',

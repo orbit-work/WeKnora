@@ -4781,7 +4781,7 @@ export default {
       typeLabel: '知識庫類型',
       typeDocument: '文件',
       typeFAQ: '問答',
-      typeDescription: 'FAQ 類型適合結構化問答資料；文件型支持檔案解析與切塊；Wiki 類型由 LLM 自動建構互鏈知識頁面。',
+      typeDescription: '文件型用於匯入檔案，可在下方勾選 Wiki 產生互鏈頁面；問答型用於維護問題與答案。',
       nameLabel: '知識庫名稱',
       namePlaceholder: '請輸入知識庫名稱',
       descriptionLabel: '知識庫描述',

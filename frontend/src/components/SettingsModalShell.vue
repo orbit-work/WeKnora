@@ -22,8 +22,10 @@
               </div>
               <nav class="settings-nav" :data-guide="navGuide || undefined">
                 <slot name="nav">
-                  <template v-for="group in navGroups" :key="group.key">
-                    <div class="nav-group-title">{{ group.label }}</div>
+                  <component :is="group.collapsible ? 'details' : 'div'" v-for="group in navGroups" :key="group.key"
+                    :open="group.collapsible && group.items.some(item => item.key === modelValue)">
+                    <component v-if="group.label" :is="group.collapsible ? 'summary' : 'div'" class="nav-group-title"
+                      :class="{ 'nav-group-toggle': group.collapsible }">{{ group.label }}</component>
                     <div v-for="item in group.items" :key="item.key" :class="['nav-item', { active: modelValue === item.key }]"
                       :data-guide="navItemGuidePrefix ? `${navItemGuidePrefix}-${item.key}` : undefined"
                       @click="emit('update:modelValue', item.key)">
@@ -33,7 +35,7 @@
                       <span class="nav-label">{{ item.label }}</span>
                       <span v-if="showBadge(item)" :class="['nav-badge', item.badgeClass]">{{ item.badge }}</span>
                     </div>
-                  </template>
+                  </component>
                 </slot>
               </nav>
             </aside>
@@ -81,6 +83,7 @@ export interface SettingsModalNavGroup {
   key: string
   label: string
   items: SettingsModalNavItem[]
+  collapsible?: boolean
 }
 
 withDefaults(
@@ -242,6 +245,12 @@ function showBadge(item: SettingsModalNavItem): boolean {
     font-size: var(--app-text-sm);
     font-weight: 600;
     letter-spacing: 0.02em;
+  }
+
+  .nav-group-toggle {
+    cursor: pointer;
+    padding-bottom: 8px;
+    color: var(--td-text-color-secondary);
   }
 
   .settings-nav > .nav-group-title:first-child {
