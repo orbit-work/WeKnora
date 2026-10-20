@@ -921,16 +921,15 @@ func initDatabase(cfg *config.Config) (*gorm.DB, error) {
 		// we replace that with the actual STORAGE_TYPE from the environment.
 		resolveStorageProviderPending(db)
 		migrateLegacyStorageBackends(db)
-
-		// Post-migration: declarative built-in models from config/builtin_models.yaml (optional).
-		// The loader validates each row's catalog parameters through this hook;
-		// the wiring lives here because internal/types cannot import the catalog.
-		types.ValidateModelParameters = modelruntime.ValidateRow
-		if err := types.LoadBuiltinModelsConfig(context.Background(), db, config.ConfigDir()); err != nil {
-			logger.Warnf(context.Background(), "Load builtin models config failed: %v", err)
-		}
 	} else {
 		logger.Infof(context.Background(), "Auto-migration is disabled (AUTO_MIGRATE=false)")
+	}
+
+	// Load built-in model configuration even when migrations are managed externally.
+	// Wire catalog validation here because internal/types cannot import the catalog.
+	types.ValidateModelParameters = modelruntime.ValidateRow
+	if err := types.LoadBuiltinModelsConfig(context.Background(), db, config.ConfigDir()); err != nil {
+		logger.Warnf(context.Background(), "Load builtin models config failed: %v", err)
 	}
 
 	// Get underlying SQL DB object
