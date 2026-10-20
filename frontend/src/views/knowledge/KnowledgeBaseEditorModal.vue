@@ -524,8 +524,8 @@
       </div>
 
       <!-- 共享设置（仅编辑模式） -->
-      <div v-if="editorMode === 'edit' && activeKbId && currentSection === 'share'" class="section">
-        <component v-if="permissionSettings" :is="permissionSettings" :kb-id="activeKbId" />
+      <div v-if="editorMode === 'edit' && activeKbId && (permissionSettings || currentSection === 'share')" v-show="currentSection === 'share'" class="section">
+        <component v-if="permissionSettings" :is="permissionSettings" :key="activeKbId" :kb-id="activeKbId" @dirty="permissionDirty = $event" />
         <KBShareSettings v-else :kb-id="activeKbId" :can-share="canShareKB" />
       </div>
 
@@ -678,6 +678,7 @@ const copyKbId = async () => {
 }
 
 const currentSection = ref<string>('basic')
+const permissionDirty = ref(false)
 
 const onKbEditorFocusSection = (event: Event) => {
   const section = (event as CustomEvent<{ section?: string }>).detail?.section
@@ -1758,7 +1759,8 @@ const doSubmit = async () => {
       }
 
       emit('success', kbId)
-      handleClose()
+      modalShell.markClean()
+      modalShell.requestClose()
     }
   } catch (error: any) {
     console.error('Knowledge base operation failed:', error)
@@ -1786,6 +1788,7 @@ const doSubmit = async () => {
 
 // 重置所有状态
 const resetState = () => {
+  permissionDirty.value = false
   savedKbId.value = null
   currentSection.value = 'basic'
   formData.value = null
@@ -1813,6 +1816,7 @@ const modalShell = useModalShell({
   visible: () => props.visible,
   close: handleClose,
   snapshot: () => formData.value,
+  additionalDirty: () => permissionDirty.value,
 })
 
 // 监听弹窗打开/关闭
