@@ -4,8 +4,8 @@ import test from 'node:test'
 
 const source = readFileSync(new URL('./KnowledgeBaseEditorModal.vue', import.meta.url), 'utf8')
 
-test('editing a knowledge base closes the editor after a successful save', () => {
-  assert.match(source, /emit\('success', kbId\)\s*handleClose\(\)/)
+test('saving knowledge base settings checks for unsaved permission changes before closing', () => {
+  assert.match(source, /emit\('success', kbId\)\s*modalShell\.markClean\(\)\s*modalShell\.requestClose\(\)/)
 })
 
 test('the first successful create stays open for follow-up configuration', () => {
