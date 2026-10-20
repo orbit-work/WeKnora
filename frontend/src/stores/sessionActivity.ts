@@ -1,7 +1,7 @@
 import { reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { getMessageList } from '@/api/chat/index'
-import { useAuthStore } from './auth'
+import { useAuthStore } from '@/stores/auth'
 import {
   createSessionActivityState,
   restoreSessionActivity,

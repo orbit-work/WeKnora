@@ -10,7 +10,7 @@
             </h2>
             <div class="header-actions" style="--wails-draggable: no-drag">
               <ResourceSortControl v-model="selectedResourceSort" />
-              <t-tooltip v-if="authStore.hasRole('contributor')" :content="$t('knowledgeList.create')" placement="bottom">
+              <t-tooltip v-if="authStore.canManageKnowledgeBases" :content="$t('knowledgeList.create')" placement="bottom">
                  <t-button variant="text" theme="default" size="small" class="header-action-btn"
                    data-guide="kb-list-create" style="--wails-draggable: no-drag" @click="handleCreateKnowledgeBase">
                    <template #icon><t-icon name="folder-add" size="16px" /></template>
@@ -607,7 +607,7 @@
         <EmptyState v-if="!keyword.trim() && spaceSelection === 'all' && filteredKnowledgeBases.length === 0 && !loading" :title="$t('knowledgeList.empty.title')"
           :description="$t('knowledgeList.empty.description')">
           <template #icon><ResourceIcon type="knowledge" :size="32" /></template>
-          <t-button v-if="authStore.hasRole('contributor')" theme="primary" class="kb-create-btn"
+          <t-button v-if="authStore.canManageKnowledgeBases" theme="primary" class="kb-create-btn"
             data-guide="kb-list-create" @click="handleCreateKnowledgeBase">
             <template #icon><t-icon name="folder-add" /></template>
             {{ $t('knowledgeList.create') }}
@@ -627,7 +627,7 @@
         <EmptyState v-if="!keyword.trim() && spaceSelection === 'mine' && kbs.length === 0 && !loading" :title="$t('knowledgeList.empty.title')"
           :description="$t('knowledgeList.empty.description')">
           <template #icon><ResourceIcon type="knowledge" :size="32" /></template>
-          <t-button v-if="authStore.hasRole('contributor')" theme="primary" class="kb-create-btn"
+          <t-button v-if="authStore.canManageKnowledgeBases" theme="primary" class="kb-create-btn"
             data-guide="kb-list-create" @click="handleCreateKnowledgeBase">
             <template #icon><t-icon name="folder-add" /></template>
             {{ $t('knowledgeList.create') }}
@@ -775,7 +775,7 @@ const selectedResourceSort = ref<ResourceSortValue>(DEFAULT_RESOURCE_SORT)
 // composable handles two-way sync with the URL. We keep "mine" as the
 // stored value (not "workspace") for back-compat with any external link
 // that might point at the old query; ResourceListToolbar labels it as the current workspace.
-const defaultScope: 'all' | 'mine' = authStore.hasRole('contributor') ? 'mine' : 'all'
+const defaultScope: 'all' | 'mine' = 'all'
 const { scope: spaceSelection, creator: creatorFilter, query: keyword } = useListUrlState({
   defaultScope,
   defaultCreator: 'all',
@@ -1119,7 +1119,7 @@ const filteredKnowledgeBases = computed(() => unsearchedFilteredKnowledgeBases.v
 
 const showKbListEmpty = computed(() => {
   if (loading.value || keyword.value.trim()) return false
-  if (!authStore.hasRole('contributor')) return false
+  if (!authStore.canManageKnowledgeBases) return false
   if (spaceSelection.value === 'all' && filteredKnowledgeBases.value.length === 0) return true
   if (spaceSelection.value === 'mine' && kbs.value.length === 0) return true
   return false
@@ -1276,7 +1276,7 @@ function canManageKBCard(kb: KB): boolean {
 }
 
 function canDuplicateKBCard(kb: any): boolean {
-  return authStore.hasRole('contributor') && kb.isMine !== false
+  return authStore.canManageKnowledgeBases && kb.isMine !== false
 }
 
 // isMyKb 仅用于卡片右下角徽章在「我创建」与「同空间其他成员创建」之间切换。

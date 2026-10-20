@@ -1062,7 +1062,11 @@ const loadKnowledgeBaseInfo = async (targetKbId: string, force = false) => {
     const data = await chatResources.fetchKnowledgeBaseById(targetKbId, force);
     if (!isCurrentKb(targetKbId)) return;
 
+    const enteringKb = kbInfo.value?.id !== data.id;
     kbInfo.value = data;
+    if (enteringKb && !route.query.tab && !route.query.knowledge_id) {
+      activeKbTab.value = data.indexing_strategy?.wiki_enabled ? 'wiki' : 'documents';
+    }
     selectedTagIds.value = [];
     selectedTagNames.value = {};
     uiStore.clearSelectedTagIds();

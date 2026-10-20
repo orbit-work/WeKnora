@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import { useAuthStore } from './auth'
+import { useAuthStore } from '@/stores/auth'
 
 const RECENT_KEY_PREFIX = 'weknora_cmdk_recent'
 const RECENT_LIMIT = 4

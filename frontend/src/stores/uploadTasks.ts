@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { batchQueryKnowledge, uploadKnowledgeFile } from '@/api/knowledge-base/index'
-import { useAuthStore } from './auth'
+import { useAuthStore } from '@/stores/auth'
 import type { KnowledgeStatusRow } from './uploadQueue'
 import { createUploadTasks } from './uploadTasksCore'
 

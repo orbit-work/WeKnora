@@ -111,6 +111,7 @@ if (typeof window !== 'undefined') {
 }
 
 async function fetchFavorites(type: ResourceType): Promise<void> {
+  if (useAuthStore().isLiteMode) return
   // Single-flight guard: list views mount in parallel and would otherwise
   // each fire a request. Reuse the in-flight promise instead.
   if (inFlight[type]) return inFlight[type]!

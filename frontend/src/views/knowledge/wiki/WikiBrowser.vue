@@ -450,12 +450,7 @@
                                 })
                                 }}</span>
                               </div>
-                              <t-button v-if="props.canEdit" size="small" theme="primary" variant="base"
-                                @click="triggerAutoFix">
-                                <template #icon><t-icon name="tools" /></template>
-                                {{ $t('knowledgeEditor.wikiBrowser.issueFixBtn') }}
-                              </t-button>
-                            </div>
+                              </div>
                             <div class="wiki-issue-popup-list">
                               <div v-for="issue in pageIssues" :key="issue.id" class="wiki-issue-popup-item">
                                 <div class="wiki-issue-popup-main">
@@ -485,11 +480,6 @@
                                         }) }}
                                     </span>
                                     <div v-if="props.canEdit" class="wiki-issue-popup-actions">
-                                      <span class="wiki-issue-popup-action" @click="triggerFixIssue(issue)"
-                                        style="margin-right: 12px; font-weight: 500;">
-                                        <t-icon name="tools" style="margin-right: 4px;" />{{
-                                          $t('knowledgeEditor.wikiBrowser.issueFixSingle') }}
-                                      </span>
                                       <span class="wiki-issue-popup-action"
                                         style="color: var(--td-text-color-placeholder);"
                                         @click="handleIssueIgnore(issue.id)">{{
@@ -746,13 +736,6 @@
       </div>
     </t-drawer>
 
-    <!-- Fix Chat Drawer -->
-    <t-drawer v-model:visible="showFixDrawer" :header="$t('knowledgeEditor.wikiBrowser.fixAssistantTitle')" size="700px"
-      :footer="false" class="wiki-fix-drawer">
-      <ChatView v-if="showFixDrawer" :session_id="currentFixSessionId" agentId="builtin-wiki-fixer"
-        :kbIds="[props.knowledgeBaseId]" :embeddedMode="true" />
-    </t-drawer>
-
     <!-- Revision history drawer -->
     <WikiRevisionDrawer v-model:visible="showRevisionDrawer" :kb-id="props.knowledgeBaseId"
       :slug="selectedPage?.slug || ''" :current-page="selectedPage" :can-edit="props.canEdit"
@@ -821,7 +804,6 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useMenuStore } from '@/stores/menu'
 import { useSettingsStore } from '@/stores/settings'
 import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
@@ -840,8 +822,6 @@ import {
 import { resolveWikiBacklinkTitle } from './wikiBacklinkTitles'
 import { buildGraphLayout, graphNodeRadius, stepGraphLayout, visibleGraphLabels, graphPointBounds, initialGraphViewport, graphClusterOutline, graphLandmarkTitle, type GraphBounds, type GraphCluster } from './wikiGraphLayout'
 import { getKnowledgeDetails } from '@/api/knowledge-base'
-import { createSessions } from '@/api/chat'
-import ChatView from '@/views/chat/index.vue'
 import {
   listWikiPages,
   listWikiFolders,
@@ -870,7 +850,6 @@ import {
 
 const router = useRouter()
 const route = useRoute()
-const menuStore = useMenuStore()
 const settingsStore = useSettingsStore()
 
 ensureLiteralSingleTildeOnGlobalMarked()
@@ -881,7 +860,6 @@ const props = defineProps<{
   knowledgeBaseId: string
   view?: 'browser' | 'graph'
   // canEdit 由父组件 KnowledgeBase.vue 透传（与 canEdit computed 同源）。
-  // 控制 AutoFix / FixIssue / IgnoreIssue 三个写操作按钮的可见性，
   // 对应后端 g.OwnedWikiKBOrAdmin() 守卫（KB creator OR Admin+ OR
   // org-share editor）。父组件没传时按 false 兜底，避免漏 gate。
   canEdit?: boolean
@@ -1011,10 +989,8 @@ const activeSystemView = ref<'' | 'index'>('')
 const searchResults = ref<WikiPage[] | null>(null)
 const pageIssues = ref<WikiPageIssue[]>([])
 const showIssuesBox = ref(false)
-const showFixDrawer = ref(false)
 const showGlobalIssuesDrawer = ref(false)
 const globalIssues = ref<WikiPageIssue[]>([])
-const currentFixSessionId = ref('')
 const stats = ref<WikiStats | null>(null)
 const graphData = ref<WikiGraphData | null>(null)
 const searchQuery = ref('')
@@ -3698,58 +3674,6 @@ async function handleIssueIgnore(issueId: string) {
   } catch (e) {
     console.error('Failed to update issue status:', e)
   }
-}
-
-async function startFixSession(prompt: string) {
-  try {
-    const res = await createSessions({})
-    if (res && (res as any).data && (res as any).data.id) {
-      const sessionId = (res as any).data.id
-      const now = new Date().toISOString()
-
-      menuStore.updataMenuChildren({
-        title: t('knowledgeEditor.wikiBrowser.fixAssistantTitle'),
-        path: `chat/${sessionId}`,
-        id: sessionId,
-        isMore: false,
-        isNoTitle: true,
-        created_at: now,
-        updated_at: now
-      })
-
-      menuStore.changeIsFirstSession(true)
-      menuStore.changeFirstQuery(prompt, [], '', [])
-
-      currentFixSessionId.value = sessionId
-      showFixDrawer.value = true
-      showIssuesBox.value = false // Hide issues box
-    } else {
-      MessagePlugin.error(t('knowledgeEditor.wikiBrowser.fixStartError'))
-    }
-  } catch (e) {
-    console.error('Failed to create fix session', e)
-    MessagePlugin.error(t('knowledgeEditor.wikiBrowser.fixStartError'))
-  }
-}
-
-function triggerFixIssue(issue: WikiPageIssue) {
-  if (!selectedPage.value) return
-  const prompt = t('knowledgeEditor.wikiBrowser.issueFixPromptSingle', {
-    slug: selectedPage.value.slug,
-    id: issue.id
-  })
-  startFixSession(prompt)
-}
-
-function triggerAutoFix() {
-  if (!selectedPage.value || pageIssues.value.length === 0) return
-  let prompt = t('knowledgeEditor.wikiBrowser.issueFixPromptAutoStart', { slug: selectedPage.value.slug }) + '\n\n'
-
-  pageIssues.value.forEach((issue, idx) => {
-    prompt += `${idx + 1}. Issue ID: ${issue.id}\n`
-  })
-
-  startFixSession(prompt)
 }
 
 async function doSearch() {
@@ -7008,44 +6932,4 @@ span.graph-focus-name {
 }
 </style>
 
-<style lang="less">
-/* Fix Embedded Chat UI (unscoped because drawer attaches to body) */
-.wiki-fix-drawer {
-  .t-drawer__body {
-    padding: 20px !important;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .chat {
-    max-width: 100% !important;
-    min-width: 100% !important;
-    padding: 0 !important;
-    height: 100% !important;
-    flex: 1 !important;
-    border-radius: 0 !important;
-  }
-
-  .chat_scroll_box {
-    padding: 0 !important;
-  }
-
-  .chat>.input-container {
-    padding: 16px 0 0 0 !important;
-    box-sizing: border-box;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    overflow-x: hidden;
-  }
-
-  .msg_list {
-    max-width: 100% !important;
-    padding-bottom: 0 !important;
-    margin: 0 !important;
-  }
-}
-</style>
 <style lang="less" src="@/components/css/wiki-graph-drawer.less"></style>

@@ -540,7 +540,7 @@
       </div>
 
       <!-- 数据源管理（仅编辑模式） -->
-      <div v-if="editorMode === 'edit' && activeKbId && currentSection === 'datasource'" class="section">
+      <div v-if="editorMode === 'edit' && activeKbId && currentSection === 'datasource' && authStore.canManageDataSources" class="section">
         <DataSourceSettings :kb-id="activeKbId" @count="dsCount = $event" />
       </div>
 
@@ -813,7 +813,7 @@ const navItems = computed(() => {
       { key: 'graph', icon: 'chart-bubble', label: t('knowledgeEditor.sidebar.graph') },
       { key: 'advanced', icon: 'setting', label: t('knowledgeEditor.sidebar.advanced') }
     )
-    if (editorMode.value === 'edit' && activeKbId.value) {
+    if (editorMode.value === 'edit' && activeKbId.value && authStore.canManageDataSources) {
       items.push({ key: 'datasource', icon: 'cloud-download', label: t('knowledgeEditor.sidebar.datasource'), badge: dsCount.value || undefined })
     }
   }
@@ -883,6 +883,10 @@ const kbCreateNeedsEmbedding = computed(() => {
 
 const applyDefaultModelsIfEmpty = () => {
   if (!formData.value || editorMode.value !== 'create') return
+  if (formData.value.type === 'document') {
+    formData.value.multimodalConfig.vllmModelId ||= selectInitialModelId(allModels.value, 'VLLM') || ''
+    formData.value.asrConfig.modelId ||= selectInitialModelId(allModels.value, 'ASR') || ''
+  }
   const chatModelId = selectInitialModelId(allModels.value, 'KnowledgeQA')
   const embeddingModelId = selectInitialModelId(allModels.value, 'Embedding')
   if (!formData.value.modelConfig.llmModelId && chatModelId) {
@@ -944,7 +948,7 @@ const initFormData = (type: 'document' | 'faq' = 'document') => {
     storageBackendId: '' as string,
     storageProvider: '' as string,
     multimodalConfig: {
-      enabled: false,
+      enabled: type === 'document',
       vllmModelId: '',
       descriptionLanguage: '',
       customInstructions: ''
@@ -959,7 +963,7 @@ const initFormData = (type: 'document' | 'faq' = 'document') => {
     imageActions: mergeImageActions(),
     imageProcessingConfigSnapshot: null as Record<string, unknown> | null,
     asrConfig: {
-      enabled: false,
+      enabled: type === 'document',
       modelId: '',
       language: ''
     },
@@ -1441,6 +1445,11 @@ const validateForm = (): boolean => {
     return false
   }
 
+  if (formData.value.type === 'document' && formData.value.asrConfig.enabled && !formData.value.asrConfig.modelId) {
+    MessagePlugin.warning(t('uploadConfirm.asrModelSelectRequired'))
+    currentSection.value = 'asr'
+    return false
+  }
   if (formData.value.type === 'faq' && !formData.value.faqConfig?.indexMode) {
     MessagePlugin.warning(t('knowledgeEditor.messages.indexModeRequired'))
     currentSection.value = 'faq'

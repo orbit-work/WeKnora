@@ -181,6 +181,9 @@ export const useAuthStore = defineStore('auth', () => {
     return (ROLE_LEVEL[currentTenantRole.value] ?? 0) >= ROLE_LEVEL[min]
   }
 
+  const canManageKnowledgeBases = computed(() => hasRole('contributor'))
+  const canManageDataSources = computed(() => hasRole('admin'))
+
   const effectiveTenantId = computed(() => {
     // 如果选择了其他空间，使用选择的空间ID，否则使用用户默认空间ID
     return selectedTenantId.value || (tenant.value?.id ? Number(tenant.value.id) : null)
@@ -595,6 +598,8 @@ export const useAuthStore = defineStore('auth', () => {
     isSystemAdmin,
     currentTenantRole,
     hasRole,
+    canManageKnowledgeBases,
+    canManageDataSources,
     effectiveTenantId,
     isLiteMode,
 
