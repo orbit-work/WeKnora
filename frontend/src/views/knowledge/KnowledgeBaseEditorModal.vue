@@ -297,17 +297,6 @@
         />
       </div>
 
-      <!-- 存储引擎 -->
-      <div v-if="!isFAQ && formData && currentSection === 'storage'" class="section">
-        <KBStorageSettings
-          :storage-backend-id="formData.storageBackendId"
-          :storage-provider="formData.storageProvider"
-          :has-files="editorMode === 'edit' && hasFiles"
-          @update:storage-backend-id="handleStorageBackendUpdate"
-          @update:storage-provider="handleStorageProviderUpdate"
-        />
-      </div>
-
       <!-- 分块设置 -->
       <div v-if="!isFAQ" v-show="currentSection === 'chunking'" class="section">
         <KBChunkingSettings
@@ -511,17 +500,6 @@
         </div>
       </div>
 
-      <!-- 知识图谱 -->
-      <div v-if="!isFAQ && currentSection === 'graph'" class="section">
-        <GraphSettings
-          v-if="formData"
-          :graph-extract="formData.nodeExtractConfig"
-          :model-id="formData.modelConfig.llmModelId"
-          :all-models="allModels"
-          @update:graphExtract="handleNodeExtractUpdate"
-        />
-      </div>
-
       <!-- 高级设置 -->
       <div v-if="!isFAQ" v-show="currentSection === 'advanced'" class="section">
         <KBAdvancedSettings
@@ -637,12 +615,10 @@ import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import KBModelConfig from './settings/KBModelConfig.vue'
 import KBParserSettings from './settings/KBParserSettings.vue'
-import KBStorageSettings from './settings/KBStorageSettings.vue'
 import KBChunkingSettings from './settings/KBChunkingSettings.vue'
 import KBVectorStoreSettings from './settings/KBVectorStoreSettings.vue'
 import KBAdvancedSettings from './settings/KBAdvancedSettings.vue'
 import ModelSelector from '@/components/ModelSelector.vue'
-import GraphSettings from './settings/GraphSettings.vue'
 import KBShareSettings from './settings/KBShareSettings.vue'
 import DataSourceSettings from './settings/DataSourceSettings.vue'
 import KnowledgeBaseActivitySettings from './settings/KnowledgeBaseActivitySettings.vue'
@@ -1319,20 +1295,6 @@ const handleAddWikiModel = () => {
   uiStore.openSettings('models', 'knowledgeqa')
 }
 
-const handleStorageProviderUpdate = (value: string) => {
-  if (formData.value) {
-    formData.value.storageProvider = editorMode.value === 'create'
-      ? editorResources.resolveUsableStorageProvider(value || tenantDefaultStorageProvider.value)
-      : (value || tenantDefaultStorageProvider.value || 'local')
-  }
-}
-
-const handleStorageBackendUpdate = (value: string) => {
-  if (formData.value) {
-    formData.value.storageBackendId = value
-  }
-}
-
 async function loadTenantDefaultStorageProvider(force = false) {
   try {
     await editorResources.ensureStorageEngine(force)
@@ -1397,12 +1359,6 @@ const handleAdoptProfileGist = () => {
   if (!gist || !formData.value) return
   formData.value.description = gist.slice(0, 200)
   MessagePlugin.success(t('knowledgeEditor.basic.profile.adopted'))
-}
-
-const handleNodeExtractUpdate = (config: any) => {
-  if (formData.value) {
-    formData.value.nodeExtractConfig = { ...config }
-  }
 }
 
 // 验证表单
@@ -1607,8 +1563,7 @@ const buildSubmitData = () => {
     }
   }
 
-  // Always persist extract_config so the toggle state from GraphSettings is saved,
-  // regardless of whether the graph indexing strategy is currently enabled.
+  // Preserve extraction settings when editing other knowledge-base options.
   if (formData.value.nodeExtractConfig) {
     data.extract_config = {
       enabled: !!formData.value.nodeExtractConfig.enabled,
@@ -2251,7 +2206,7 @@ watch(() => chatResources.allModels, (list) => {
 }
 
 // 过渡动画
-// 多模态配置内联样式（与子组件 KBStorageSettings/KBAdvancedSettings 一致）
+// 多模态配置内联样式
 .kb-multimodal-settings {
   width: 100%;
 
