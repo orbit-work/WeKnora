@@ -35,7 +35,7 @@ env:
 jobs:
   warm-cache:
     name: warm lint cache (${{ matrix.module }})
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     timeout-minutes: 30
     strategy:
       fail-fast: false

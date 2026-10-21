@@ -20,7 +20,7 @@ defaults:
     # Windows default is PowerShell, which tokenizes `go test -coverprofile=coverage.out ./...`
     # in a way that detaches `.out` as a separate positional package arg.
     # Force bash everywhere so the run lines parse identically across platforms
-    # (Git Bash is preinstalled on windows-latest runners).
+    # (the self-hosted Windows runner must provide Git Bash).
     shell: bash
 
 permissions:
@@ -29,11 +29,18 @@ permissions:
 jobs:
   test:
     name: test (${{ matrix.os }} / go ${{ matrix.go }})
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [Linux, macOS, Windows]
+        include:
+          - os: Linux
+            runner: [self-hosted, Linux, X64, build]
+          - os: macOS
+            runner: [self-hosted, macOS, ARM64]
+          - os: Windows
+            runner: [self-hosted, Windows, x64]
         go: ['1.26']
     steps:
       - uses: actions/checkout@v6
@@ -54,5 +61,5 @@ jobs:
         if: runner.os == 'Linux'
         run: scripts/check-secret-tokens.sh
       - name: coverage report
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: go tool cover -func=coverage.out

@@ -32,7 +32,7 @@ permissions:
 jobs:
   test:
     name: Test (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     strategy:
       fail-fast: false
       matrix:
@@ -60,7 +60,7 @@ jobs:
   build:
     name: Build sdist + wheel
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     # Build on push to main, manual runs, and release tags — but never on PRs.
     if: github.event_name != 'pull_request'
     defaults:
@@ -96,7 +96,7 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     # Publish on push to main, manual runs (main/tags only), and release tags — never on PRs.
     if: >-
       github.event_name != 'pull_request' &&

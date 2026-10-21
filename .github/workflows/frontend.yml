@@ -30,7 +30,7 @@ env:
 jobs:
   verify:
     name: Test, type-check, and build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     timeout-minutes: 20
     defaults:
       run:
@@ -58,7 +58,7 @@ jobs:
 
   docker-image:
     name: Docker multi-stage image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6

@@ -41,12 +41,10 @@ fetch_sha256() {
 
 SHA_DARWIN_ARM64=$(fetch_sha256 "WeKnora-lite_${VERSION}_darwin_arm64.tar.gz")
 SHA_DARWIN_AMD64=$(fetch_sha256 "WeKnora-lite_${VERSION}_darwin_amd64.tar.gz")
-SHA_LINUX_ARM64=$(fetch_sha256  "WeKnora-lite_${VERSION}_linux_arm64.tar.gz")
 SHA_LINUX_AMD64=$(fetch_sha256  "WeKnora-lite_${VERSION}_linux_amd64.tar.gz")
 
 echo "  darwin_arm64 : ${SHA_DARWIN_ARM64}"
 echo "  darwin_amd64 : ${SHA_DARWIN_AMD64}"
-echo "  linux_arm64  : ${SHA_LINUX_ARM64}"
 echo "  linux_amd64  : ${SHA_LINUX_AMD64}"
 
 # Use a temp file for portable sed
@@ -60,13 +58,11 @@ sed -i.bak "s/^  version \".*\"/  version \"${VERSION_BARE}\"/" "${TMP}"
 # The formula has sha256 lines in this order:
 #   1. darwin arm64
 #   2. darwin amd64
-#   3. linux arm64
-#   4. linux amd64
+#   3. linux amd64
 awk -v s1="${SHA_DARWIN_ARM64}" \
     -v s2="${SHA_DARWIN_AMD64}" \
-    -v s3="${SHA_LINUX_ARM64}" \
-    -v s4="${SHA_LINUX_AMD64}" \
-    'BEGIN{n=0} /sha256 "/{n++; if(n==1) sub(/"[^"]*"$/,"\"" s1 "\""); else if(n==2) sub(/"[^"]*"$/,"\"" s2 "\""); else if(n==3) sub(/"[^"]*"$/,"\"" s3 "\""); else if(n==4) sub(/"[^"]*"$/,"\"" s4 "\"")} {print}' \
+    -v s3="${SHA_LINUX_AMD64}" \
+    'BEGIN{n=0} /sha256 "/{n++; if(n==1) sub(/"[^"]*"$/,"\"" s1 "\""); else if(n==2) sub(/"[^"]*"$/,"\"" s2 "\""); else if(n==3) sub(/"[^"]*"$/,"\"" s3 "\"")} {print}' \
     "${TMP}" > "${FORMULA}"
 
 rm -f "${TMP}" "${TMP}.bak"
