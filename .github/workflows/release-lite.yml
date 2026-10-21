@@ -25,7 +25,7 @@ env:
 jobs:
   # ── 1. Build frontend once, share as artifact (for Web CLI) ──
   build-frontend:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     steps:
       - uses: actions/checkout@v6
 
@@ -54,21 +54,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - runner: [self-hosted, Linux, X64, build]
             goos: linux
             goarch: amd64
-          - os: ubuntu-24.04-arm
-            goos: linux
-            goarch: arm64
-          - os: macos-14
+          - runner: [self-hosted, macOS, ARM64]
             goos: darwin
             goarch: amd64
-          - os: macos-14
+          - runner: [self-hosted, macOS, ARM64]
             goos: darwin
             goarch: arm64
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     env:
       CGO_ENABLED: 1
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
     steps:
       - uses: actions/checkout@v6
 
@@ -141,27 +140,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - runner: [self-hosted, macOS, ARM64]
             platform: darwin/universal
             arch_label: macOS_universal
             artifact_name: desktop-macos-universal
-          - os: macos-14
+          - runner: [self-hosted, macOS, ARM64]
             platform: darwin/amd64
             arch_label: macOS_amd64
             artifact_name: desktop-macos-amd64
-          - os: macos-14
+          - runner: [self-hosted, macOS, ARM64]
             platform: darwin/arm64
             arch_label: macOS_arm64
             artifact_name: desktop-macos-arm64
-          - os: ubuntu-latest
+          - runner: [self-hosted, Linux, X64, build]
             platform: linux/amd64
             arch_label: linux_amd64
             artifact_name: desktop-linux-amd64
-          - os: windows-latest
+          - runner: [self-hosted, Windows, x64]
             platform: windows/amd64
             arch_label: windows_amd64
             artifact_name: desktop-windows-amd64
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     env:
       CGO_ENABLED: 1
     steps:
@@ -324,7 +323,7 @@ jobs:
   # ── 3. Create GitHub Release ──
   release:
     needs: [build-binary, build-desktop-app]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     steps:
       - uses: actions/checkout@v6
 
@@ -381,7 +380,6 @@ jobs:
           | 文件 | 平台 |
           |------|------|
           | `WeKnora-lite_*_linux_amd64.tar.gz` | Linux x86_64 |
-          | `WeKnora-lite_*_linux_arm64.tar.gz` | Linux ARM64 |
           | `WeKnora-lite_*_darwin_amd64.tar.gz` | macOS Intel |
           | `WeKnora-lite_*_darwin_arm64.tar.gz` | macOS Apple Silicon |
 
@@ -416,7 +414,7 @@ jobs:
   # ── 4. Update Homebrew Formula ──
   update-homebrew:
     needs: release
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     steps:
       - uses: actions/checkout@v6
         with:

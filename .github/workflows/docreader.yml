@@ -37,7 +37,7 @@ env:
 jobs:
   verify:
     name: Python tests and Go client tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -83,7 +83,7 @@ jobs:
       - name: Start DocReader gRPC server
         run: |
           uv run --project docreader --python ${{ env.PYTHON_VERSION }} python -m docreader.main &
-          echo $! > /tmp/docreader.pid
+          echo $! > "${RUNNER_TEMP}/docreader.pid"
           for i in $(seq 1 30); do
             if nc -z 127.0.0.1 50051 2>/dev/null; then
               echo "DocReader gRPC server is ready"
@@ -100,6 +100,6 @@ jobs:
       - name: Stop DocReader gRPC server
         if: always()
         run: |
-          if [ -f /tmp/docreader.pid ]; then
-            kill "$(cat /tmp/docreader.pid)" 2>/dev/null || true
+          if [ -f "${RUNNER_TEMP}/docreader.pid" ]; then
+            kill "$(cat "${RUNNER_TEMP}/docreader.pid")" 2>/dev/null || true
           fi

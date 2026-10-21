@@ -43,7 +43,7 @@ jobs:
   # lints every module, since they share the root config.
   changes:
     name: detect lint modules
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     outputs:
       modules: ${{ steps.detect.outputs.modules }}
     steps:
@@ -89,7 +89,7 @@ jobs:
     name: golangci-lint (${{ matrix.module }})
     needs: changes
     if: needs.changes.outputs.modules != '[]'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, build]
     timeout-minutes: 20
     strategy:
       fail-fast: false
