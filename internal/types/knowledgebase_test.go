@@ -6,6 +6,17 @@ import (
 	"testing"
 )
 
+func TestFAQEnsureDefaultsEnablesRetrieval(t *testing.T) {
+	kb := KnowledgeBase{Type: KnowledgeBaseTypeFAQ}
+	kb.EnsureDefaults()
+	if kb.FAQConfig == nil || kb.FAQConfig.IndexMode != FAQIndexModeQuestionAnswer || kb.FAQConfig.QuestionIndexMode != FAQQuestionIndexModeCombined {
+		t.Fatal("FAQ defaults were not initialized")
+	}
+	if !kb.IndexingStrategy.VectorEnabled || !kb.IndexingStrategy.KeywordEnabled {
+		t.Fatal("FAQ must enable vector and keyword retrieval by default")
+	}
+}
+
 func TestParseProviderScheme(t *testing.T) {
 	tests := []struct {
 		input string
